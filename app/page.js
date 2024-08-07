@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -77,25 +78,25 @@ export default function Home() {
 
   const updateItem = async () => {
     if (editingItem && itemName && itemQuantity) {
-      const oldDocRef = doc(collection(firestore, 'inventory'), editingItem)
-      const newDocRef = doc(collection(firestore, 'inventory'), itemName)
+      try {
+        const oldDocRef = doc(collection(firestore, 'inventory'), editingItem)
+        const newDocRef = doc(collection(firestore, 'inventory'), itemName)
 
-      const oldDocSnap = await getDoc(oldDocRef)
-      const newDocSnap = await getDoc(newDocRef)
-
-      if (oldDocSnap.exists()) {
+        // Delete the old item
         await deleteDoc(oldDocRef)
-      }
 
-      if (newDocSnap.exists()) {
-        const { quantity } = newDocSnap.data()
-        await setDoc(newDocRef, { quantity: quantity + parseInt(itemQuantity) })
-      } else {
+        // Add the new item with the specified quantity
         await setDoc(newDocRef, { quantity: parseInt(itemQuantity) })
-      }
 
-      await updateInventory()
-      resetForm()
+        // Update the inventory list
+        await updateInventory()
+
+        // Reset the form
+        resetForm()
+      } catch (error) {
+        console.error("Error updating item: ", error)
+        alert('An error occurred while updating the item.')
+      }
     }
   }
 
