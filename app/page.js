@@ -47,14 +47,14 @@ export default function Home() {
   }
 
   const addItem = async () => {
-    if (itemName) {
+    if (itemName && itemQuantity) {
       const docRef = doc(collection(firestore, 'inventory'), itemName)
       const docSnap = await getDoc(docRef)
       if (docSnap.exists()) {
         const { quantity } = docSnap.data()
-        await setDoc(docRef, { quantity: quantity + 1 })
+        await setDoc(docRef, { quantity: quantity + parseInt(itemQuantity) })
       } else {
-        await setDoc(docRef, { quantity: 1 })
+        await setDoc(docRef, { quantity: parseInt(itemQuantity) })
       }
       await updateInventory()
       resetForm()
@@ -76,9 +76,24 @@ export default function Home() {
   }
 
   const updateItem = async () => {
-    if (editingItem && itemQuantity) {
-      const docRef = doc(collection(firestore, 'inventory'), editingItem)
-      await setDoc(docRef, { quantity: parseInt(itemQuantity) })
+    if (editingItem && itemName && itemQuantity) {
+      const oldDocRef = doc(collection(firestore, 'inventory'), editingItem)
+      const newDocRef = doc(collection(firestore, 'inventory'), itemName)
+
+      const oldDocSnap = await getDoc(oldDocRef)
+      const newDocSnap = await getDoc(newDocRef)
+
+      if (oldDocSnap.exists()) {
+        await deleteDoc(oldDocRef)
+      }
+
+      if (newDocSnap.exists()) {
+        const { quantity } = newDocSnap.data()
+        await setDoc(newDocRef, { quantity: quantity + parseInt(itemQuantity) })
+      } else {
+        await setDoc(newDocRef, { quantity: parseInt(itemQuantity) })
+      }
+
       await updateInventory()
       resetForm()
     }
@@ -145,17 +160,15 @@ export default function Home() {
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
             />
-            {!editingItem && (
-              <TextField
-                id="item-quantity"
-                label="Item Quantity"
-                variant="outlined"
-                fullWidth
-                value={itemQuantity}
-                onChange={(e) => setItemQuantity(e.target.value)}
-                type="number"
-              />
-            )}
+            <TextField
+              id="item-quantity"
+              label="Item Quantity"
+              variant="outlined"
+              fullWidth
+              value={itemQuantity}
+              onChange={(e) => setItemQuantity(e.target.value)}
+              type="number"
+            />
             <Stack direction={'row'} spacing={2}>
               <Button
                 variant="contained"
@@ -305,5 +318,3 @@ export default function Home() {
     </Box>
   )
 }
-
-
